@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>三点焊计算器</title>
+    <style>
+        :root {
+            --bg: #f5f7fa;
+            --card: rgba(255,255,255,0.95);
+            --ink: #2c3e50;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --surface: #ffffff;
+            --red: #dc2626;
+            --green: #16a34a;
+            --orange: #d97706;
+            --purple: #7c3aed;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #111827;
+                --card: rgba(30,30,46,0.95);
+                --ink: #e5e7eb;
+                --muted: #9ca3af;
+                --border: #374151;
+                --shadow: 0 4px 24px rgba(0,0,0,0.3);
+                --primary: #3b82f6;
+                --primary-light: #1e293b;
+                --surface: #1f2937;
+            }
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .panel {
+            background: var(--card);
+            padding: 20px 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        h2 {
+            font-size: 1.25em;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 700;
+        }
+        h3 {
+            font-size: 0.95em;
+            margin: 12px 0 8px;
+            color: var(--ink);
+            font-weight: 600;
+        }
+        .input-section {
+            background: var(--primary-light);
+            padding: 12px 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 100px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.78em;
+            font-weight: 600;
+            margin-bottom: 3px;
+            color: var(--ink);
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            background: var(--surface);
+            color: var(--ink);
+            transition: 0.2s;
+        }
+        input[type="number"]:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+        }
+        button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 600;
+            transition: 0.15s;
+        }
+        button:hover { opacity: 0.9; }
+        button:active { transform: scale(0.97); }
+        .btn-sm { padding: 4px 8px; font-size: 11px; border-radius: 6px; }
+        .btn-red { background: var(--red); }
+        .btn-green { background: var(--green); }
+        .btn-orange { background: var(--orange); }
+        .btn-purple { background: var(--purple); }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline.active {
+            background: var(--primary);
+            color: #fff;
+        }
+        .quadrants {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .quadrant {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+        .quadrant-header {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .quick-angles {
+            display: flex;
+            gap: 3px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .quick-angles button {
+            flex: 1;
+            min-width: 30px;
+            padding: 3px 4px;
+            font-size: 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        .annotation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 8px;
+            margin: 3px 0;
+            background: rgba(0,0,0,0.02);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
+        .letter-tag {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            color: #fff;
+            border-radius: 50%;
+            margin-right: 5px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .program-content {
+            background: var(--surface);
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 350px;
+            overflow-y: auto;
+            color: var(--ink);
+        }
+        .canvas-wrapper {
+            background: var(--surface);
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .export-buttons button { flex: 1; min-width: 90px; }
+        .info-text {
+            font-size: 0.75em;
+            color: var(--muted);
+            margin-top: 4px;
+            padding: 4px 8px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 6px;
+        }
+        .footer-credit {
+            text-align: center;
+            font-size: 0.8em;
+            color: var(--muted);
+            padding: 12px 0 4px;
+            opacity: 0.8;
+        }
+        .footer-credit a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .footer-credit a:hover {
+            text-decoration: underline;
+        }
+        canvas {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            aspect-ratio: 1/1;
+            border-radius: 12px;
+            background: var(--surface);
+            display: block;
+        }
+        @media (max-width: 640px) {
+            body { padding: 8px; }
+            .panel { padding: 14px 16px; }
+            .quadrants { grid-template-columns: 1fr; }
+            button { font-size: 12px; padding: 7px 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="main-container">
+    <div class="panel">
+        <h2>三点焊计算器</h2>
+        <div class="input-section">
+            <h3>基本几何</h3>
+            <div class="input-row">
+                <div class="input-group"><label>圆直径 (mm)</label><input type="number" id="circleDia" value="110.29" step="0.01" min="1"></div>
+                <div class="input-group"><label>起点 C角度</label><input type="number" id="startAngleDeg" value="320.8" step="0.1"></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>起点 X</label><input type="number" id="startX" value="-22" step="0.1"></div>
+                <div class="input-group"><label>起点 Y</label><input type="number" id="startY" value="27" step="0.1"></div>
+            </div>
+        </div>
+        <div class="input-section">
+            <h3>加工参数</h3>
+            <div class="input-row">
+                <div class="input-group"><label>安全高度 Z</label><input type="number" id="safeZ" value="80" step="1"></div>
+                <div class="input-group"><label>切削深度 Z</label><input type="number" id="cutZ" value="-8" step="0.1"></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>退刀距离 R</label><input type="number" id="retractR" value="3" step="0.1"></div>
+                <div class="input-group"><label>暂停时间 P</label><input type="number" id="dwellP" value="0.3" step="0.1"></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>进给 F</label><input type="number" id="feedF" value="400" step="10"></div>
+                <div class="input-group"><label>接近进给 F2</label><input type="number" id="approachF" value="650" step="10"></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>主轴转速 S2</label><input type="number" id="spindleSpeed" value="1900" step="100"></div>
+                <div class="input-group"><label>刀号 T</label><input type="number" id="toolNum" value="6" step="1"></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label>起点偏移</label><input type="number" id="startOffset" value="3" step="0.1"><span class="info-text" style="margin-left:4px;">X起点 = 半径 + 偏移</span></div>
+            </div>
+        </div>
+        <div class="input-section">
+            <h3>焊点标注</h3>
+            <div class="quadrants" id="quadrantsContainer">
+                <div class="quadrant"><div class="quadrant-header" style="color:#e74c3c;">左上</div><div id="q2-controls"></div><div class="quick-angles"><button onclick="setQ(2,15)">15</button><button onclick="setQ(2,30)">30</button><button onclick="setQ(2,45)">45</button><button onclick="setQ(2,60)">60</button><button onclick="setQ(2,80)">80</button></div><div id="quadrant2-list"></div></div>
+                <div class="quadrant"><div class="quadrant-header" style="color:#3498db;">右上</div><div id="q1-controls"></div><div class="quick-angles"><button onclick="setQ(1,15)">15</button><button onclick="setQ(1,30)">30</button><button onclick="setQ(1,45)">45</button><button onclick="setQ(1,60)">60</button><button onclick="setQ(1,80)">80</button></div><div id="quadrant1-list"></div></div>
+                <div class="quadrant"><div class="quadrant-header" style="color:#27ae60;">右下</div><div id="q4-controls"></div><div class="quick-angles"><button onclick="setQ(4,15)">15</button><button onclick="setQ(4,30)">30</button><button onclick="setQ(4,45)">45</button><button onclick="setQ(4,60)">60</button><button onclick="setQ(4,80)">80</button></div><div id="quadrant4-list"></div></div>
+                <div class="quadrant"><div class="quadrant-header" style="color:#f39c12;">左下</div><div id="q3-controls"></div><div class="quick-angles"><button onclick="setQ(3,15)">15</button><button onclick="setQ(3,30)">30</button><button onclick="setQ(3,45)">45</button><button onclick="setQ(3,60)">60</button><button onclick="setQ(3,80)">80</button></div><div id="quadrant3-list"></div></div>
+            </div>
+            <div class="input-row" style="margin-top:12px; gap:8px;">
+                <button onclick="addExampleAnnotations()" class="btn-orange" style="flex:1;">示例焊点</button>
+                <button onclick="clearAllAnnotations()" class="btn-red" style="flex:1;">清除全部</button>
+            </div>
+            <div class="input-row" style="margin-top:8px; gap:8px;">
+                <button id="reverseOrderBtn" onclick="toggleReverseOrder()" class="btn-outline" style="flex:1;">反转顺序: 顺时针</button>
+                <button id="reverseFaceBtn" onclick="toggleReverseFace()" class="btn-outline" style="flex:1;">反转PQ面: P面</button>
+            </div>
+        </div>
+    </div>
+    <div class="panel">
+        <h2>图形预览</h2>
+        <div class="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+    <div class="panel">
+        <h2>加工程序</h2>
+        <div class="program-content" id="programOutput">请添加标注后生成程序</div>
+        <div class="export-buttons">
+            <button class="btn-green" onclick="copyProgram()">复制程序</button>
+            <button class="btn-orange" onclick="exportProgram()">导出文件</button>
+        </div>
+        <div class="info-text" id="sortInfo"></div>
+    </div>
+    <div class="footer-credit">
+        本工具由 鱼 与 <a href="https://www.deepseek.com" target="_blank">DeepSeek AI</a> 共同开发<br>
+        <a href="https://github.com/Xiaowuyu273637/Three-Point-Welding-Calculator" target="_blank">GitHub 仓库</a>
+    </div>
+</div>
+<script>
+    (function() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        const cfg = {
+            circleDia: 110.29,
+            startAngle: 320.8,
+            startX: -22,
+            startY: 27,
+            annotations: [],
+            usedLetters: new Set(),
+            isReversedOrder: false,
+            isReversedFace: false
+        };
+
+        let cx, cy, radiusPx;
+
+        function c2d(cAngle) { return 90 - cAngle; }
+        function d2c(deg) { let c = 90 - deg; return ((c % 360) + 360) % 360; }
+
+        function fmtNum(n) {
+            if (!Number.isFinite(n)) return '0.00';
+            let s = Math.abs(n).toFixed(4);
+            s = s.replace(/0+$/, '');
+            if (s.endsWith('.')) s += '00';
+            const dp = s.indexOf('.');
+            if (dp === -1) return s + '.00';
+            const dec = s.length - dp - 1;
+            if (dec < 2) s += '0'.repeat(2 - dec);
+            return s;
+        }
+
+        function sfmt(v) { return v < 0 ? '-' + fmtNum(Math.abs(v)) : fmtNum(v); }
+
+        function inputAngleToDisplay(inputAngle) {
+            inputAngle = ((inputAngle % 90) + 90) % 90;
+            if (inputAngle <= 45) {
+                return { display: inputAngle, absAngle: inputAngle };
+            } else {
+                return { display: -(90 - inputAngle), absAngle: inputAngle };
+            }
+        }
+
+        function getMirrorQuadrant(q) {
+            const swapMap = {1:2, 2:1, 3:4, 4:3};
+            return swapMap[q] || q;
+        }
+
+        function getEffectiveDisplayAngle(a) {
+            if (!cfg.isReversedFace) return a.relAngle;
+            return -a.relAngle;
+        }
+
+        function relToAbs(quadrant, inputAngle) {
+            const { absAngle, display } = inputAngleToDisplay(inputAngle);
+            
+            if (cfg.isReversedFace) {
+                const mirrorQ = getMirrorQuadrant(quadrant);
+                const mirrorAngle = -display;
+                let effectiveAbs;
+                if (mirrorAngle >= 0) {
+                    effectiveAbs = mirrorAngle;
+                } else {
+                    effectiveAbs = 90 + mirrorAngle;
+                }
+                const base = {1:0, 2:270, 3:180, 4:90};
+                return (base[mirrorQ] + effectiveAbs) % 360;
+            }
+            
+            const base = {1:0, 2:270, 3:180, 4:90};
+            return (base[quadrant] + absAngle) % 360;
+        }
+
+        function nextLetter() {
+            for (let l of LETTERS) {
+                if (!cfg.usedLetters.has(l)) {
+                    cfg.usedLetters.add(l);
+                    return l;
+                }
+            }
+            return 'X' + (cfg.annotations.length + 1);
+        }
+
+        function getStartCAngle() {
+            return parseFloat(document.getElementById('startAngleDeg').value) || 320.8;
+        }
+
+        function cAngleToXY(cAngle) {
+            const r = parseFloat(document.getElementById('circleDia').value) / 2 || 55.145;
+            const rad = c2d(cAngle) * Math.PI / 180;
+            return {
+                x: Math.round(Math.cos(rad) * r * 1000) / 1000,
+                y: Math.round(Math.sin(rad) * r * 1000) / 1000
+            };
+        }
+
+        function xyToCAngle(x, y) {
+            return d2c(Math.atan2(y, x) * 180 / Math.PI);
+        }
+
+        function getCWDiff(absAngle) {
+            const start = getStartCAngle();
+            let diff = absAngle - start;
+            if (diff < 0) diff += 360;
+            return diff;
+        }
+
+        function signedAbsoluteOffset(absAngle) {
+            const cw = getCWDiff(absAngle);
+            return cw <= 180 ? cw : cw - 360;
+        }
+
+        function getSortedByCW() {
+            return cfg.annotations.map(a => ({
+                ...a,
+                cwDiff: getCWDiff(a.absAngle)
+            })).sort((a, b) => a.cwDiff - b.cwDiff);
+        }
+
+        function generateProgram() {
+            let sorted = getSortedByCW();
+            if (!sorted.length) {
+                document.getElementById('programOutput').textContent = '请添加标注';
+                document.getElementById('sortInfo').textContent = '';
+                return;
+            }
+
+            if (cfg.isReversedOrder) {
+                sorted = sorted.reverse();
+            }
+
+            const circleDia = parseFloat(document.getElementById('circleDia').value) || 110.29;
+            const circleR = circleDia / 2;
+            const startOffset = parseFloat(document.getElementById('startOffset').value) || 3;
+            const startXP = Math.round(circleR + startOffset);
+            const safeZ = parseFloat(document.getElementById('safeZ').value) || 80;
+            const cutZ = parseFloat(document.getElementById('cutZ').value) || -8;
+            const retractR = parseFloat(document.getElementById('retractR').value) || 3;
+            const dwellP = parseFloat(document.getElementById('dwellP').value) || 0.3;
+            const feedF = parseFloat(document.getElementById('feedF').value) || 400;
+            const approachF = parseFloat(document.getElementById('approachF').value) || 650;
+            const spindleSpeed = parseFloat(document.getElementById('spindleSpeed').value) || 1900;
+            const toolNum = parseFloat(document.getElementById('toolNum').value) || 6;
+
+            const pointsWithOffset = sorted.map(a => ({
+                ...a,
+                absOffset: signedAbsoluteOffset(a.absAngle)
+            }));
+
+            let prog = `N5
+G98
+T${toolNum}
+M13S2=${spindleSpeed}
+M19
+G00Z${fmtNum(safeZ)}
+G00X-${startXP}C${sfmt(pointsWithOffset[0].absOffset)}
+Z5.0
+G00Z${fmtNum(cutZ)}F${approachF}
+G87X-${fmtNum(circleDia)}R${fmtNum(retractR)}P${fmtNum(dwellP)}F${feedF}`;
+
+            for (let i = 1; i < pointsWithOffset.length; i++) {
+                prog += `
+C${sfmt(pointsWithOffset[i].absOffset)}`;
+            }
+
+            prog += `
+G00Z${fmtNum(safeZ)}`;
+
+            document.getElementById('programOutput').textContent = prog;
+
+            const direction = cfg.isReversedOrder ? '逆时针' : '顺时针';
+            const face = cfg.isReversedFace ? 'Q面' : 'P面';
+            const infoStr = pointsWithOffset.map(p => {
+                const displayAngle = getEffectiveDisplayAngle(p);
+                return `${p.label}(${displayAngle > 0 ? '+' : ''}${displayAngle.toFixed(1)})`;
+            }).join(' -> ');
+            document.getElementById('sortInfo').textContent = `${face} ${direction}: ${infoStr}`;
+        }
+
+        function updateStartFromAngle() {
+            const cAng = getStartCAngle();
+            const xy = cAngleToXY(cAng);
+            document.getElementById('startX').value = xy.x.toFixed(3);
+            document.getElementById('startY').value = xy.y.toFixed(3);
+            refreshAll();
+        }
+
+        function updateStartFromXY() {
+            const x = parseFloat(document.getElementById('startX').value) || 0;
+            const y = parseFloat(document.getElementById('startY').value) || 0;
+            document.getElementById('startAngleDeg').value = xyToCAngle(x, y).toFixed(3);
+            refreshAll();
+        }
+
+        function addAnnotation(q) {
+            const sel = document.getElementById(`label-q${q}`);
+            let lbl = sel.value === 'auto' ? nextLetter() : sel.value;
+            if (LETTERS.includes(lbl) && !cfg.usedLetters.has(lbl)) {
+                cfg.usedLetters.add(lbl);
+            }
+            const angInput = document.getElementById(`angle-q${q}`);
+            const inputAngle = Math.min(90, Math.max(0, parseFloat(angInput?.value) || 0));
+            const { display } = inputAngleToDisplay(inputAngle);
+            const abs = relToAbs(q, inputAngle);
+            const colorInput = document.getElementById(`color-q${q}`);
+            cfg.annotations.push({
+                id: Date.now() + Math.random(),
+                quadrant: q,
+                inputAngle: inputAngle,
+                relAngle: display,
+                absAngle: abs,
+                label: lbl,
+                color: colorInput?.value || '#4285f4'
+            });
+            refreshAll();
+            if (sel) sel.value = 'auto';
+        }
+
+        function delAnnotation(id) {
+            const a = cfg.annotations.find(x => x.id == id);
+            if (a && LETTERS.includes(a.label)) cfg.usedLetters.delete(a.label);
+            cfg.annotations = cfg.annotations.filter(x => x.id != id);
+            refreshAll();
+        }
+
+        function clearAllAnnotations() {
+            cfg.usedLetters.clear();
+            cfg.annotations = [];
+            refreshAll();
+        }
+
+        function addExampleAnnotations() {
+            const examples = [
+                {q:2, r:1, c:'#e74c3c'},
+                {q:2, r:49, c:'#e74c3c'},
+                {q:2, r:88, c:'#e74c3c'},
+                {q:1, r:49, c:'#3498db'},
+                {q:4, r:51, c:'#27ae60'},
+                {q:3, r:13, c:'#f39c12'}
+            ];
+            examples.forEach(e => {
+                const l = nextLetter();
+                const { display } = inputAngleToDisplay(e.r);
+                cfg.annotations.push({
+                    id: Date.now()+Math.random(),
+                    quadrant: e.q,
+                    inputAngle: e.r,
+                    relAngle: display,
+                    absAngle: relToAbs(e.q, e.r),
+                    label: l,
+                    color: e.c
+                });
+            });
+            refreshAll();
+        }
+
+        function setQ(q, angle) {
+            const inp = document.querySelector(`#angle-q${q}`);
+            if (inp) inp.value = angle;
+        }
+
+        function updateList() {
+            const groups = {1:[],2:[],3:[],4:[]};
+            cfg.annotations.forEach(a => groups[a.quadrant].push(a));
+            for (let q=1; q<=4; q++) {
+                const div = document.getElementById(`quadrant${q}-list`);
+                const items = groups[q].sort((a,b) => a.inputAngle - b.inputAngle);
+                div.innerHTML = items.length ? items.map(a => {
+                    const displayAngle = getEffectiveDisplayAngle(a);
+                    return `
+                    <div class="annotation-item">
+                        <span><span class="letter-tag" style="background:${a.color};">${a.label}</span> ${displayAngle.toFixed(1)}</span>
+                        <button class="btn-sm btn-red" onclick="window.__delAnno('${a.id}')">x</button>
+                    </div>`;
+                }).join('') : '<div style="color:var(--muted);font-size:11px;text-align:center;padding:4px;">-</div>';
+            }
+        }
+        window.__delAnno = (id) => delAnnotation(id);
+
+        function updateButtonStates() {
+            const orderBtn = document.getElementById('reverseOrderBtn');
+            const faceBtn = document.getElementById('reverseFaceBtn');
+            
+            if (cfg.isReversedOrder) {
+                orderBtn.classList.add('active');
+                orderBtn.textContent = '反转顺序: 逆时针';
+            } else {
+                orderBtn.classList.remove('active');
+                orderBtn.textContent = '反转顺序: 顺时针';
+            }
+            
+            if (cfg.isReversedFace) {
+                faceBtn.classList.add('active');
+                faceBtn.textContent = '反转PQ面: Q面';
+            } else {
+                faceBtn.classList.remove('active');
+                faceBtn.textContent = '反转PQ面: P面';
+            }
+        }
+
+        function toggleReverseOrder() {
+            cfg.isReversedOrder = !cfg.isReversedOrder;
+            updateButtonStates();
+            refreshAll();
+        }
+
+        function toggleReverseFace() {
+            cfg.isReversedFace = !cfg.isReversedFace;
+            updateButtonStates();
+            cfg.annotations.forEach(a => {
+                a.absAngle = relToAbs(a.quadrant, a.inputAngle);
+            });
+            refreshAll();
+        }
+
+        function drawCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const wrapper = canvas.parentElement;
+            const w = wrapper.clientWidth - 28;
+            const size = Math.min(w, 500);
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            canvas.style.width = size + 'px';
+            canvas.style.height = size + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            cx = size/2; cy = size/2;
+            radiusPx = size * 0.32;
+
+            ctx.clearRect(0,0,size,size);
+
+            const faceLabel = cfg.isReversedFace ? 'Q面' : 'P面';
+            ctx.fillStyle = '#555';
+            ctx.font = 'bold 15px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText(faceLabel, size - 12, 12);
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = '#444';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.beginPath(); ctx.arc(cx,cy,radiusPx,0,2*Math.PI);
+            ctx.strokeStyle = '#ccc'; ctx.lineWidth=1.5; ctx.stroke();
+
+            const startCAng = getStartCAngle();
+            const startRad = c2d(startCAng) * Math.PI/180;
+            const sx = cx + Math.cos(startRad)*radiusPx;
+            const sy = cy - Math.sin(startRad)*radiusPx;
+            ctx.beginPath(); ctx.arc(sx,sy,6,0,2*Math.PI);
+            ctx.fillStyle='#7c3aed'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+            ctx.fillStyle='#7c3aed'; ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.fillText('S', sx, sy-16);
+
+            let sorted = getSortedByCW();
+            if (cfg.isReversedOrder) {
+                sorted = sorted.reverse();
+            }
+
+            cfg.annotations.forEach(a => {
+                const rad = c2d(a.absAngle) * Math.PI/180;
+                const px = cx + Math.cos(rad)*radiusPx;
+                const py = cy - Math.sin(rad)*radiusPx;
+                const lineLen = radiusPx * 0.3;
+                const ex = cx + Math.cos(rad)*(radiusPx+lineLen);
+                const ey = cy - Math.sin(rad)*(radiusPx+lineLen);
+
+                ctx.beginPath(); ctx.arc(px,py,4,0,2*Math.PI); ctx.fillStyle=a.color; ctx.fill();
+                ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ex,ey); ctx.strokeStyle=a.color; ctx.lineWidth=2; ctx.stroke();
+
+                const tx = cx + Math.cos(rad)*(radiusPx+lineLen+18);
+                const ty = cy - Math.sin(rad)*(radiusPx+lineLen+18);
+                ctx.beginPath(); ctx.arc(tx,ty,11,0,2*Math.PI); ctx.fillStyle=a.color; ctx.fill();
+                ctx.fillStyle='#fff'; ctx.font='bold 11px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(a.label, tx, ty);
+
+                const idx = sorted.findIndex(s => s.id === a.id);
+                if (idx >= 0) {
+                    ctx.fillStyle=a.color; ctx.font='bold 9px Arial'; ctx.fillText(`#${idx+1}`, tx+15, ty-3);
+                }
+
+                const displayAngle = getEffectiveDisplayAngle(a);
+                const angleText = (displayAngle > 0 ? '+' : '') + displayAngle.toFixed(1);
+                const angleTx = px;
+                const angleTy = py + 14;
+                ctx.font = 'bold 10px Arial';
+                const textWidth = ctx.measureText(angleText).width;
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.fillRect(angleTx - textWidth/2 - 3, angleTy - 1, textWidth + 6, 13);
+                ctx.fillStyle = a.color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(angleText, angleTx, angleTy);
+            });
+        }
+
+        function refreshAll() {
+            updateList();
+            generateProgram();
+            drawCanvas();
+        }
+
+        function initControls() {
+            for (let q=1; q<=4; q++) {
+                const div = document.getElementById(`q${q}-controls`);
+                const defaultColors = ['','#3498db','#e74c3c','#f39c12','#27ae60'];
+                div.innerHTML = `
+                    <div class="input-row">
+                        <select id="label-q${q}" style="flex:1;">
+                            <option value="auto">自动</option>
+                            ${LETTERS.split('').map(l=>`<option value="${l}">${l}</option>`).join('')}
+                        </select>
+                        <input type="number" id="angle-q${q}" min="0" max="90" step="0.1" value="45" style="width:65px;"><span style="font-size:12px;">deg</span>
+                    </div>
+                    <div class="input-row">
+                        <input type="color" id="color-q${q}" value="${defaultColors[q]}" style="width:36px; height:28px; padding:1px;">
+                        <button onclick="addAnnotation(${q})" style="flex:1;">添加</button>
+                    </div>`;
+            }
+            updateButtonStates();
+        }
+
+        function copyProgram() {
+            const txt = document.getElementById('programOutput').textContent;
+            if (!txt || txt.includes('请添加')) { alert('请先添加焊点生成程序'); return; }
+            navigator.clipboard?.writeText(txt).then(()=>alert('已复制'));
+        }
+
+        function exportProgram() {
+            const txt = document.getElementById('programOutput').textContent;
+            if (!txt || txt.includes('请添加')) return;
+            const blob = new Blob([txt],{type:'text/plain'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = '三点焊程序.txt'; a.click();
+        }
+
+        window.addAnnotation = addAnnotation;
+        window.setQ = setQ;
+        window.addExampleAnnotations = addExampleAnnotations;
+        window.clearAllAnnotations = clearAllAnnotations;
+        window.copyProgram = copyProgram;
+        window.exportProgram = exportProgram;
+        window.toggleReverseOrder = toggleReverseOrder;
+        window.toggleReverseFace = toggleReverseFace;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initControls();
+            document.getElementById('startAngleDeg').addEventListener('input', updateStartFromAngle);
+            document.getElementById('startX').addEventListener('input', updateStartFromXY);
+            document.getElementById('startY').addEventListener('input', updateStartFromXY);
+            ['circleDia','startOffset','safeZ','cutZ','retractR','dwellP','feedF','approachF','spindleSpeed','toolNum'].forEach(id => {
+                document.getElementById(id).addEventListener('input', refreshAll);
+            });
+            window.addEventListener('resize', drawCanvas);
+            refreshAll();
+            setTimeout(() => addExampleAnnotations(), 300);
+        });
+    })();
+</script>
+</body>
+</html>
